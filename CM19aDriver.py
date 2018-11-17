@@ -86,12 +86,17 @@ LOGFILE = './cm19a.log'             # Path and filename for the logfile
 
 #MODE = 'Command Line'              # Mode of operation: either 'Command Line', 'HTTP Server'
 MODE = 'HTTP Server'
+MODE = 'MQTT Server'
 
 # Required only if MODE == 'HTTP Server'
-SERVER_IP_ADDRESS = '192.168.1.3'              # Set SERVERIP to the IP address of the server
+SERVER_IP_ADDRESS = '192.168.1.63'              # Set SERVERIP to the IP address of the server
 SERVER_PORT = 8008                             # Consider firewall rules if any
-SERVER_IP_ADDRESS = '127.0.0.1'              # Set SERVERIP to the IP address of the server
-SERVER_PORT = 8008                             # Consider firewall rules if any
+
+# Required only if MODE == 'MQTT Server'
+MQTT_CLIENT_NAME = 'cm19a_module'
+MQTT_HOST = '192.168.0.164'
+MQTT_PORT = '1883'
+MQTT_TOPIC = "cmnd/%s/Power"
 
 # Required only for HTTP Server and importing into another script
 REFRESH = 1.0               # Refresh rate (seconds) for polling the transceiver for inbound commands
@@ -110,8 +115,16 @@ import usb
 # Code Modules
 import logger
 
+# mqtt Modules
+import paho.mqtt.client as mqtt
+
+# signal handling for Ctrl+C
+import signal
+import sys
+
 # Globals
-global cm19a, log, server
+global cm19a, log, server, mqtt_alive
+
 
 class USBdevice:
     def __init__(self, vendor_id, product_id) :
@@ -220,7 +233,6 @@ class CM19aDevice(threading.Thread):
         # then set 'start' to False when the class instance is created
         if self.polling:
             self.start()
-
 
     def _open_device(self) :
         """ Open the device, claim the interface, and create a device handle """
@@ -763,7 +775,50 @@ def processcommandline():
     return returnval
 
 
+def signal_handler(sig, frame):
+    global mqtt_alive
+
+    log.info("Ctrl+C received!")
+    mqtt_alive = False
+    print "Ctrl+C received!"
+
+
+#def startMQTT(MQTT_CLIENT_NAME, MQTT_HOST, MQTT_PORT):
+
+#    mqtt_alive = True
+
+#    self.client = mqtt.Client(MQTT_CLIENT_NAME)
+#    self.client.connect(MQTT_HOST, MQTT_PORT)
+#    log.info("Failed to connect to MQTT Server: %s:%s" % (MQTT_HOST, MQTT_PORT)
+
+def startMQTT( client, host, port ):
+
+    global mqtt_alive
+
+    mqtt_alive = True
+    log.info( "Connecting to MQTT server at: %s:%s" % (MQTT_HOST, MQTT_PORT) )
+
+    signal.signal(signal.SIGINT, signal_handler)
+
+    try:
+        client = mqtt.Client(client)
+        client.connect(host, port)
+    except:
+        log.info("Failed to connect to MQTT Server")
+        return
+
+    while mqtt_alive:
+        response = cm19a.getReceiveQueue()
+        if len(response) > 0:
+            for code in response:
+                #log.info( "publish: " + MQTT_TOPIC + " " + "%s" % ( code[:2], code[2:] ) )
+                client.publish( "cmnd/%s/Power" % code[:2], code[2:] )
+                log.info( "cmnd/%s/Power %s" % ( code[:2], code[2:] ) )
+ 
+        time.sleep(1)
+
 #Main
+
 if __name__ == '__main__':
 
     # Configure logging
@@ -798,6 +853,28 @@ if __name__ == '__main__':
         #    sudo ./cm19aDriver.py A 1 ON
         #    echo "Result: $?"
 
+    elif MODE.lower() == 'mqtt server':
+        # Accept commands via http (eg a Web Browser)
+        print "\nInitialising..."
+        log.info('Initialising...')
+        cm19a = CM19aDevice(REFRESH, log, polling = True)       # Initialise device. Note: auto polling/receviing in a thread is turned ON
+        if cm19a.initialised:
+            log.info("Configuring the MQTT server on %s:%s" % (SERVER_IP_ADDRESS, SERVER_PORT))
+            print "Configuring the MQTT server on %s:%s" % (SERVER_IP_ADDRESS, SERVER_PORT)
+            log.info("Starting the MQTT server...")
+            print "Starting the MQTT server..."
+            #signal.signal(signal.SIGINT, signal_handler)
+            startMQTT(MQTT_CLIENT_NAME, MQTT_HOST, MQTT_PORT)
+            # Finish and tidy up
+            log.info("All done")
+            cm19a.finish()
+            sys.exit(0)
+        else:
+            print "Error initialising the CM19a...exiting..."
+            log.error("Error initialising the CM19a...exiting...")
+            cm19a.finish()
+            sys.exit(1)
+
     elif MODE.lower() in ['http server', 'web server']:
         # Accept commands via http (eg a Web Browser)
         print "\nInitialising..."
@@ -809,6 +886,7 @@ if __name__ == '__main__':
             server = HTTPServer((SERVER_IP_ADDRESS, SERVER_PORT,), HTTPhandler)
             log.info("Starting the HTTP server...")
             print "Starting the HTTP server..."
+            #signal.signal(signal.SIGINT, signal_handler)
             server.serve_forever()
             # Finish and tidy up
             server = None
