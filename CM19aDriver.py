@@ -812,9 +812,11 @@ def startMQTT( client, host, port ):
         if len(response) > 0:
             for code in response:
                 #log.info( "publish: " + MQTT_TOPIC + " " + "%s" % ( code[:2], code[2:] ) )
-                client.publish( "cmnd/%s/Power" % code[:2], code[2:] )
-                log.info( "cmnd/%s/Power %s" % ( code[:2], code[2:] ) )
- 
+                if code[2:].lower() in ['on', 'off', 'brightbuttonpressed', 'dimbuttonpressed']:
+                    client.publish( "cmnd/%s/Power" % code[:2], code[2:] )
+                    log.info( "cmnd/%s/Power %s" % ( code[:2], code[2:] ) )
+                else:
+                    log.info( "got garbage, ignoring: cmnd/%s/Power %s" % ( code[:2], code[2:] ) )
         time.sleep(1)
 
 #Main
