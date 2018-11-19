@@ -338,7 +338,7 @@ class CM19aDevice(threading.Thread):
 
 
     def getReceiveQueue(self):
-        """ 
+        """
             Returns the queue (list) of incoming commands
             Clears it ready for receiving more
         """
@@ -782,6 +782,25 @@ def signal_handler(sig, frame):
     mqtt_alive = False
     print "Ctrl+C received!"
 
+def on_connect(client, userdata, flags, rc):
+    if rc==0:
+        client.connected_flag=True #set flag
+        log.info(("connected OK")
+    else:
+        if rc == 1:
+            log.info("Connection refused – incorrect protocol version")
+        elif rc == 2:
+            log.info("Connection refused – invalid client identifier")
+        elif rc == 3:
+            log.info("Connection refused – server unavailable")
+        elif rc == 4:
+            log.info("Connection refused – bad username or password")
+        elif rc == 5:
+            log.info("Connection refused – not authorised")
+        else
+            log.info("Connection refused – Returned code=",rc)
+        client.bad_connection_flag=False
+
 
 #def startMQTT(MQTT_CLIENT_NAME, MQTT_HOST, MQTT_PORT):
 
@@ -800,24 +819,47 @@ def startMQTT( client, host, port ):
 
     signal.signal(signal.SIGINT, signal_handler)
 
+    mqtt.Client.connected_flag=False	#create flag in class
+
+    client = mqtt.Client(client)
+    client.on_connect=on_connect  		#bind call back function
+    client.loop_start()
+    log.info("Connecting to broker ",host)
+
     try:
-        client = mqtt.Client(client)
         client.connect(host, port)
     except:
         log.info("Failed to connect to MQTT Server")
         return
 
-    while mqtt_alive:
+    while not client.connected_flag and not client.bad_connection_flag: #wait in loop
+        log.info("Waiting for connection to be established")
+        time.sleep(1)
+
+    while mqtt_alive and not client.bad_connection_flag:
         response = cm19a.getReceiveQueue()
-        if len(response) > 0:
+        if response:
             for code in response:
                 #log.info( "publish: " + MQTT_TOPIC + " " + "%s" % ( code[:2], code[2:] ) )
-                if code[2:].lower() in ['on', 'off', 'brightbuttonpressed', 'dimbuttonpressed']:
-                    client.publish( "cmnd/%s/Power" % code[:2], code[2:] )
-                    log.info( "cmnd/%s/Power %s" % ( code[:2], code[2:] ) )
+
+                b = re.search(r'^(.)(\d+)(.+)', button)     # start of string, 1 character (house code), 1 or more digits (unit number), 1 or more characters (command)
+                if b:
+                    house = b.group(1).upper()
+                    unit = b.group(2).upper()
+                    command = b.group(3).lower()
+                    command.capitalize()
+                    if cmmand in ['On', 'Off', 'Brightbuttonpressed', 'Dimbuttonpressed']:
+                        client.publish( "cmnd/%s%s/Power" % (house, unit), command )
+                        log.info( "cmnd/%s%s/Power %s" % ( house, unit, command ) )
+                    else:
+                        log.info("Could not extract house code etc from %s" % code)
                 else:
-                    log.info( "got garbage, ignoring: cmnd/%s/Power %s" % ( code[:2], code[2:] ) )
-        time.sleep(1)
+                    log.info( "got garbage, ignoring code: %s" % code )
+        else:
+            time.sleep(1)
+
+    client.loop_stop()		#Stop loop
+    client.disconnect()		# disconnect
 
 #Main
 
