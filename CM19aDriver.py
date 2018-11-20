@@ -841,6 +841,7 @@ def startMQTT( client, host, port ):
         response = cm19a.getReceiveQueue()
         if response:
             for code in response:
+                print "Actioning button press: %s" % code
                 #log.info( "publish: " + MQTT_TOPIC + " " + "%s" % ( code[:2], code[2:] ) )
                 b = re.search(r'^(.)(\d+)(.+)', code)     # start of string, 1 character (house code), 1 or more digits (unit number), 1 or more characters (command)
                 if b:
