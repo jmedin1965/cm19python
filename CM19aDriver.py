@@ -108,6 +108,7 @@ VERSION = "3.00"
 # Standard modules
 import sys, time, os, threading, types
 import socket, BaseHTTPServer, httplib
+import re
 
 # pyUSB 1.0 (for libUSB 1.0 series)
 import usb
