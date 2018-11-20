@@ -842,7 +842,6 @@ def startMQTT( client, host, port ):
         if response:
             for code in response:
                 #log.info( "publish: " + MQTT_TOPIC + " " + "%s" % ( code[:2], code[2:] ) )
-                global button
                 b = re.search(r'^(.)(\d+)(.+)', button)     # start of string, 1 character (house code), 1 or more digits (unit number), 1 or more characters (command)
                 if b:
                     house = b.group(1).upper()
