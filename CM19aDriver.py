@@ -85,7 +85,7 @@ TTDs
 LOGFILE = './cm19a.log'             # Path and filename for the logfile
 
 #MODE = 'Command Line'              # Mode of operation: either 'Command Line', 'HTTP Server'
-MODE = 'HTTP Server'
+#MODE = 'HTTP Server'
 MODE = 'MQTT Server'
 
 # Required only if MODE == 'HTTP Server'
@@ -785,20 +785,20 @@ def signal_handler(sig, frame):
 def on_connect(client, userdata, flags, rc):
     if rc==0:
         client.connected_flag=True #set flag
-        log.info(("connected OK")
+        log.info("connected OK")
     else:
         if rc == 1:
-            log.info("Connection refused – incorrect protocol version")
+            log.info("Connection refused - incorrect protocol version")
         elif rc == 2:
-            log.info("Connection refused – invalid client identifier")
+            log.info("Connection refused - invalid client identifier")
         elif rc == 3:
-            log.info("Connection refused – server unavailable")
+            log.info("Connection refused - server unavailable")
         elif rc == 4:
-            log.info("Connection refused – bad username or password")
+            log.info("Connection refused - bad username or password")
         elif rc == 5:
-            log.info("Connection refused – not authorised")
-        else
-            log.info("Connection refused – Returned code=",rc)
+            log.info("Connection refused - not authorised")
+        else:
+            log.info("Connection refused - Returned code=",rc)
         client.bad_connection_flag=False
 
 
@@ -820,11 +820,12 @@ def startMQTT( client, host, port ):
     signal.signal(signal.SIGINT, signal_handler)
 
     mqtt.Client.connected_flag=False	#create flag in class
+    mqtt.Client.bad_connection_flag=False	#create flag in class
 
     client = mqtt.Client(client)
     client.on_connect=on_connect  		#bind call back function
     client.loop_start()
-    log.info("Connecting to broker ",host)
+    #log.info("Connecting to broker ",host)
 
     try:
         client.connect(host, port)
@@ -848,7 +849,7 @@ def startMQTT( client, host, port ):
                     unit = b.group(2).upper()
                     command = b.group(3).lower()
                     command.capitalize()
-                    if cmmand in ['On', 'Off', 'Brightbuttonpressed', 'Dimbuttonpressed']:
+                    if command in ['On', 'Off', 'Brightbuttonpressed', 'Dimbuttonpressed']:
                         client.publish( "cmnd/%s%s/Power" % (house, unit), command )
                         log.info( "cmnd/%s%s/Power %s" % ( house, unit, command ) )
                     else:
@@ -903,8 +904,8 @@ if __name__ == '__main__':
         log.info('Initialising...')
         cm19a = CM19aDevice(REFRESH, log, polling = True)       # Initialise device. Note: auto polling/receviing in a thread is turned ON
         if cm19a.initialised:
-            log.info("Configuring the MQTT server on %s:%s" % (SERVER_IP_ADDRESS, SERVER_PORT))
-            print "Configuring the MQTT server on %s:%s" % (SERVER_IP_ADDRESS, SERVER_PORT)
+            log.info("Configuring the MQTT server on %s:%s" % (MQTT_HOST, MQTT_PORT))
+            print "Configuring the MQTT server on %s:%s" % (MQTT_HOST, MQTT_PORT)
             log.info("Starting the MQTT server...")
             print "Starting the MQTT server..."
             #signal.signal(signal.SIGINT, signal_handler)
