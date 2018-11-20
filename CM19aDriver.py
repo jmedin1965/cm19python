@@ -857,9 +857,9 @@ def startMQTT( client, host, port ):
                         client.publish( "cmnd/%s%s/Power" % (house, unit), command )
                         log.info( "cmnd/%s%s/Power %s" % ( house, unit, command ) )
                     else:
-                        log.info("Could not extract house code etc from %s" % code)
+                        log.info( "unrecognised command, ignoring code=%s: house=%s, unit=%s, command=%s" % (code, house, unit, command )
                 else:
-                    log.info( "got garbage, ignoring code: %s" % code )
+                    log.info("Could not extract house code etc from %s" % code)
         else:
             time.sleep(1)
 
