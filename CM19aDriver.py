@@ -121,7 +121,6 @@ import paho.mqtt.client as mqtt
 
 # signal handling for Ctrl+C
 import signal
-import sys
 
 # Globals
 global cm19a, log, server, mqtt_alive
@@ -843,7 +842,7 @@ def startMQTT( client, host, port ):
         if response:
             for code in response:
                 #log.info( "publish: " + MQTT_TOPIC + " " + "%s" % ( code[:2], code[2:] ) )
-
+                global button
                 b = re.search(r'^(.)(\d+)(.+)', button)     # start of string, 1 character (house code), 1 or more digits (unit number), 1 or more characters (command)
                 if b:
                     house = b.group(1).upper()
