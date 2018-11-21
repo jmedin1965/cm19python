@@ -852,11 +852,12 @@ def startMQTT( client, host, port ):
                     #print "Command button press: %s" % command
                     #print "Unit button press: %s" % unit
                     #print "House button press: %s" % house
-                    if cmmand in ['On', 'Off', 'Brightbuttonpressed', 'Dimbuttonpressed']:
+                    if command in ['On', 'Off', 'Brightbuttonpressed', 'Dimbuttonpressed']:
                         client.publish( "cmnd/%s%s/Power" % (house, unit), command )
                         log.info( "cmnd/%s%s/Power %s" % ( house, unit, command ) )
                     else:
-                        log.info( "unrecognised command, ignoring code=%s: house=%s, unit=%s, command=%s" % (code, house, unit, command )
+                        log.info( "unrecognised command, ignoring code=%s: house=%s, unit=%s, command=%s" % (code,
+                            house, unit, command ))
                 else:
                     log.info("Could not extract house code etc from %s" % code)
         else:
