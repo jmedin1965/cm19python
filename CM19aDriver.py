@@ -847,14 +847,12 @@ def startMQTT( client, host, port ):
                 if b:
                     house = b.group(1).upper()
                     unit = b.group(2).upper()
-<<<<<<< HEAD
                     command = b.group(3).lower()
                     command = command.capitalize()
                     #print "Command button press: %s" % command
                     #print "Unit button press: %s" % unit
                     #print "House button press: %s" % house
                     if command in ['On', 'Off', 'Brightbuttonpressed', 'Dimbuttonpressed']:
-=======
                     command = b.group(3).lower().capitalize()
                     #command = b.group(3).lower()
                     #command = command.capitalize()
@@ -862,7 +860,6 @@ def startMQTT( client, host, port ):
                     print "Unit button press: %s" % unit
                     print "House button press: %s" % house
                     if cmmand in ['On', 'Off', 'Brightbuttonpressed', 'Dimbuttonpressed']:
->>>>>>> 5a7b61dbd37697a6b3afdda775bd20879dae900b
                         client.publish( "cmnd/%s%s/Power" % (house, unit), command )
                         log.info( "cmnd/%s%s/Power %s" % ( house, unit, command ) )
                     else:
