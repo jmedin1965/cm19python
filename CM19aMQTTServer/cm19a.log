@@ -1,0 +1,8 @@
+Fri 23 Nov 2018 19:13:10, INFO, ---- Starting logging at: 2018-11-23_191310 ----
+Fri 23 Nov 2018 19:13:10, INFO, Initialising...
+Fri 23 Nov 2018 19:13:10, INFO, Cm19a opened and interface claimed
+Fri 23 Nov 2018 19:13:10, INFO, Configuring the MQTT server on 192.168.0.164:1883
+Fri 23 Nov 2018 19:13:10, INFO, Starting the MQTT server...
+Fri 23 Nov 2018 19:13:10, INFO, Connecting to MQTT server at: 192.168.0.164:1883
+Fri 23 Nov 2018 19:13:10, ERROR, Failed to connect to MQTT Server
+Fri 23 Nov 2018 19:13:10, INFO, All done
